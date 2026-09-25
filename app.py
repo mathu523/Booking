@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify
-import mysql.connector
-from mysql.connector import Error
+import psycopg2
+from psycopg2 import Error
 from datetime import datetime
 import os
 
@@ -8,16 +8,10 @@ app = Flask(__name__)
 
 
 # =========================================================
-# MYSQL DATABASE CONFIGURATION
+# POSTGRESQL DATABASE CONFIGURATION
 # =========================================================
 
-DB_CONFIG = {
-    "host": os.environ.get("DB_HOST", "localhost"),
-    "port": int(os.environ.get("DB_PORT", 3306)),
-    "user": os.environ.get("DB_USER", "root"),
-    "password": os.environ.get("DB_PASSWORD", ""),
-    "database": os.environ.get("DB_NAME", "booking_db")
-}
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
 
 # =========================================================
@@ -26,12 +20,10 @@ DB_CONFIG = {
 
 def get_db_connection():
 
-    connection = mysql.connector.connect(
-        host=DB_CONFIG["host"],
-        user=DB_CONFIG["user"],
-        password=DB_CONFIG["password"],
-        database=DB_CONFIG["database"]
-    )
+    if not DATABASE_URL:
+        raise Exception("DATABASE_URL environment variable is not set.")
+
+    connection = psycopg2.connect(DATABASE_URL)
 
     return connection
 
@@ -54,7 +46,7 @@ def create_table():
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS bookings (
 
-                id INT AUTO_INCREMENT PRIMARY KEY,
+                id SERIAL PRIMARY KEY,
 
                 customer_name VARCHAR(150) NOT NULL,
 
@@ -77,7 +69,7 @@ def create_table():
 
         print("Bookings table is ready.")
 
-    except Error as e:
+    except Exception as e:
 
         print("Database table error:", e)
 
@@ -86,7 +78,7 @@ def create_table():
         if cursor:
             cursor.close()
 
-        if connection and connection.is_connected():
+        if connection:
             connection.close()
 
 
@@ -112,14 +104,10 @@ def book():
 
     try:
 
-        # ---------------------------------------------
         # GET DATA FROM JAVASCRIPT
-        # ---------------------------------------------
-
         data = request.get_json()
 
         print("Received booking:", data)
-
 
         if not data:
 
@@ -129,9 +117,9 @@ def book():
             }), 400
 
 
-        # ---------------------------------------------
+        # =================================================
         # GET VALUES
-        # ---------------------------------------------
+        # =================================================
 
         customer_name = data.get(
             "customer_name", ""
@@ -154,9 +142,9 @@ def book():
         ).strip()
 
 
-        # ---------------------------------------------
+        # =================================================
         # VALIDATION
-        # ---------------------------------------------
+        # =================================================
 
         if not customer_name:
 
@@ -178,7 +166,8 @@ def book():
 
             return jsonify({
                 "success": False,
-                "message": "Enter a valid 10-digit phone number."
+                "message":
+                    "Enter a valid 10-digit phone number."
             }), 400
 
 
@@ -190,9 +179,9 @@ def book():
             }), 400
 
 
-        # ---------------------------------------------
+        # =================================================
         # AMOUNT VALIDATION
-        # ---------------------------------------------
+        # =================================================
 
         try:
 
@@ -210,25 +199,27 @@ def book():
 
             return jsonify({
                 "success": False,
-                "message": "Amount must be greater than 0."
+                "message":
+                    "Amount must be greater than 0."
             }), 400
 
 
-        # ---------------------------------------------
+        # =================================================
         # PAYMENT VALIDATION
-        # ---------------------------------------------
+        # =================================================
 
         if payment_method not in ["GPay", "Cash"]:
 
             return jsonify({
                 "success": False,
-                "message": "Please select GPay or Cash."
+                "message":
+                    "Please select GPay or Cash."
             }), 400
 
 
-        # ---------------------------------------------
+        # =================================================
         # DATE AND TIME
-        # ---------------------------------------------
+        # =================================================
 
         now = datetime.now()
 
@@ -237,18 +228,18 @@ def book():
         booking_time = now.time()
 
 
-        # ---------------------------------------------
-        # CONNECT MYSQL
-        # ---------------------------------------------
+        # =================================================
+        # CONNECT POSTGRESQL
+        # =================================================
 
         connection = get_db_connection()
 
         cursor = connection.cursor()
 
 
-        # ---------------------------------------------
+        # =================================================
         # INSERT BOOKING
-        # ---------------------------------------------
+        # =================================================
 
         query = """
             INSERT INTO bookings
@@ -271,51 +262,75 @@ def book():
                 %s,
                 %s
             )
+            RETURNING id
         """
 
 
         values = (
+
             customer_name,
+
             phone,
+
             service,
+
             amount,
+
             payment_method,
+
             booking_date,
+
             booking_time
+
         )
 
 
-        cursor.execute(query, values)
+        cursor.execute(
+            query,
+            values
+        )
 
 
-        # ---------------------------------------------
+        # =================================================
         # GET BOOKING ID
-        # ---------------------------------------------
+        # =================================================
 
-        booking_id = cursor.lastrowid
+        booking_id = cursor.fetchone()[0]
 
 
-        # ---------------------------------------------
+        # =================================================
         # SAVE
-        # ---------------------------------------------
+        # =================================================
 
         connection.commit()
 
 
+        # =================================================
+        # PRINT SUCCESS
+        # =================================================
+
         print("----------------------------------------")
+
         print("BOOKING SAVED SUCCESSFULLY")
+
         print("Booking ID:", booking_id)
+
         print("Customer:", customer_name)
+
         print("Phone:", phone)
+
         print("Service:", service)
+
         print("Amount:", amount)
+
         print("Payment:", payment_method)
+
         print("----------------------------------------")
 
 
-        # ---------------------------------------------
+        # =================================================
         # RESPONSE
-        # ---------------------------------------------
+        # =================================================
 
         return jsonify({
 
@@ -329,11 +344,18 @@ def book():
         }), 200
 
 
-    except Error as e:
+    # =====================================================
+    # DATABASE ERROR
+    # =====================================================
+
+    except Exception as e:
 
         print("----------------------------------------")
-        print("MYSQL ERROR")
+
+        print("POSTGRESQL / SERVER ERROR")
+
         print(e)
+
         print("----------------------------------------")
 
 
@@ -352,29 +374,6 @@ def book():
         }), 500
 
 
-    except Exception as e:
-
-        print("----------------------------------------")
-        print("SERVER ERROR")
-        print(e)
-        print("----------------------------------------")
-
-
-        if connection:
-
-            connection.rollback()
-
-
-        return jsonify({
-
-            "success": False,
-
-            "message":
-                "Something went wrong. Please try again."
-
-        }), 500
-
-
     finally:
 
         if cursor:
@@ -382,7 +381,7 @@ def book():
             cursor.close()
 
 
-        if connection and connection.is_connected():
+        if connection:
 
             connection.close()
 
@@ -394,21 +393,35 @@ def book():
 if __name__ == "__main__":
 
     print("")
+
     print("==========================================")
+
     print("       CUSTOMER BOOKING SYSTEM")
+
     print("==========================================")
+
 
     # Create table automatically
+
     create_table()
 
+
     print("Server starting...")
-    print("Open: http://127.0.0.1:5000")
 
     print("==========================================")
 
 
     app.run(
+
         host="0.0.0.0",
-        port=5000,
+
+        port=int(
+            os.environ.get(
+                "PORT",
+                5000
+            )
+        ),
+
         debug=False
+
     )
