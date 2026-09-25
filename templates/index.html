@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Booking System</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+
+<body>
+
+    <div class="page-container">
+
+        <div class="booking-card">
+
+            <!-- HEADER -->
+
+            <div class="booking-header">
+
+                <h1>BOOKING</h1>
+
+                <p>
+                    Enter customer booking details
+                </p>
+
+            </div>
+
+
+            <!-- FORM -->
+
+            <form id="bookingForm">
+
+
+                <!-- CUSTOMER NAME -->
+
+                <div class="form-group">
+
+                    <label for="customerName">
+                        Customer Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="customerName"
+                        name="customerName"
+                        placeholder="Enter customer name"
+                        autocomplete="off"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- PHONE NUMBER -->
+
+                <div class="form-group">
+
+                    <label for="phone">
+                        Phone Number
+                    </label>
+
+                    <input
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        placeholder="Enter 10-digit phone number"
+                        maxlength="10"
+                        inputmode="numeric"
+                        autocomplete="off"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- SERVICE -->
+
+                <div class="form-group">
+
+                    <label for="service">
+                        Service
+                    </label>
+
+                    <select
+                        id="service"
+                        name="service"
+                        required
+                    >
+
+                        <option value="">
+                            Select Service
+                        </option>
+
+                        <option value="Hair Cut">
+                            Hair Cut
+                        </option>
+
+                        <option value="Hair Coloring">
+                            Hair Coloring
+                        </option>
+
+                        <option value="Facial">
+                            Facial
+                        </option>
+
+                        <option value="Manicure">
+                            Manicure
+                        </option>
+
+                        <option value="Pedicure">
+                            Pedicure
+                        </option>
+
+                        <option value="Spa">
+                            Spa
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- AMOUNT -->
+
+                <div class="form-group">
+
+                    <label for="amount">
+                        Amount
+                    </label>
+
+                    <div class="amount-input">
+
+                        <span>₹</span>
+
+                        <input
+                            type="number"
+                            id="amount"
+                            name="amount"
+                            placeholder="Enter amount"
+                            min="1"
+                            step="0.01"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <!-- PAYMENT METHOD -->
+
+                <div class="form-group">
+
+                    <label>
+                        Payment Method
+                    </label>
+
+
+                    <div class="payment-options">
+
+
+                        <!-- GPAY -->
+
+                        <label class="payment-card">
+
+                            <input
+                                type="radio"
+                                name="payment"
+                                value="GPay"
+                                required
+                            >
+
+                            <div class="payment-content">
+
+                                <span class="payment-title">
+                                    GPay
+                                </span>
+
+                                <span class="payment-description">
+                                    Digital Payment
+                                </span>
+
+                            </div>
+
+                        </label>
+
+
+                        <!-- CASH -->
+
+                        <label class="payment-card">
+
+                            <input
+                                type="radio"
+                                name="payment"
+                                value="Cash"
+                            >
+
+                            <div class="payment-content">
+
+                                <span class="payment-title">
+                                    Cash
+                                </span>
+
+                                <span class="payment-description">
+                                    Cash Payment
+                                </span>
+
+                            </div>
+
+                        </label>
+
+
+                    </div>
+
+                </div>
+
+
+                <!-- SUBMIT BUTTON -->
+
+                <button
+                    type="submit"
+                    id="submitBtn"
+                >
+
+                    <span id="buttonText">
+                        Submit Booking
+                    </span>
+
+                </button>
+
+
+            </form>
+
+
+            <!-- MESSAGE -->
+
+            <div
+                id="message"
+                class="message"
+            ></div>
+
+
+        </div>
+
+    </div>
+
+
+    <!-- JAVASCRIPT -->
+
+    <script src="{{ url_for('static', filename='script.js') }}">
+    </script>
+
+</body>
+
+</html>
