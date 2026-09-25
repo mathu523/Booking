@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify
 import mysql.connector
 from mysql.connector import Error
 from datetime import datetime
+import os
 
 app = Flask(__name__)
 
@@ -11,10 +12,11 @@ app = Flask(__name__)
 # =========================================================
 
 DB_CONFIG = {
-    "host": "localhost",
-    "user": "root",
-    "password": "",
-    "database": "booking_db"
+    "host": os.environ.get("DB_HOST", "localhost"),
+    "port": int(os.environ.get("DB_PORT", 3306)),
+    "user": os.environ.get("DB_USER", "root"),
+    "password": os.environ.get("DB_PASSWORD", ""),
+    "database": os.environ.get("DB_NAME", "booking_db")
 }
 
 
